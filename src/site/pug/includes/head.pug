@@ -1,0 +1,32 @@
+meta(charset="utf-8")
+meta(name="viewport" content="width=device-width, initial-scale=1")
+link(rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png")
+link(rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png")
+link(rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png")
+link(rel="manifest" href="/bibliogram.webmanifest")
+link(rel="mask-icon" href="/safari-pinned-tab.svg" color="#303030")
+meta(name="msapplication-TileColor" content="#00aba9")
+meta(name="theme-color" content="#ffffff")
+meta(name="generator" content="Bibliogram")
+
+-
+	let themeURL
+	let theme =
+		settings
+			? settings.theme
+		: constants
+			? constants.themes.default
+		: "classic"
+	try {
+		themeURL = getStaticURL("css", `/static/css/${theme}.css`)
+	} catch (e) {}
+
+if themeURL
+	link(rel="stylesheet" type="text/css" href=themeURL)
+else
+	div(style="font-size: 22px; padding: 40px 20px; white-space: pre-line; border-bottom: 3px solid black").
+		Your theme value "#{theme}" wasn't understood.
+		There is no loaded theme with that name.
+		Please #[a(href="/settings") go to the settings page] and select a different theme.
+		If that doesn't help, #[a(href="https://todo.sr.ht/~cadence/bibliogram-issues") report a bug.]
+		In your bug report, tell us which website address you saw this on, and what your theme value is.

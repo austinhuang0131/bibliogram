@@ -1,0 +1,120 @@
+//- Needs user, selectedTimeline, type, followerCountsAvailable, url, constants, settings
+
+include includes/timeline_page.pug
+include includes/next_page_button.pug
+include includes/display_structured
+include includes/feed_link
+
+- const ll = lang.get(settings.language)
+- const numberFormat = new Intl.NumberFormat().format
+
+mixin selector-button(text, selectorType, urlSuffix)
+	a(href=(type !== selectorType && `/u/${user.data.username}${urlSuffix}`) class=(type === selectorType && "active")).selector= text
+
+mixin verified-badge(classes)
+	img.verified-badge(class=classes src=getStaticURL("html", "/static/img/verified.svg") width=19 height=19 alt=ll.verified_badge_alt title=ll.verified_badge_title)
+
+doctype html
+html
+	head
+		if user.data.full_name
+			title= `${user.data.full_name} (@${user.data.username}) | Bibliogram`
+		else
+			title= `@${user.data.username} | Bibliogram`
+		include includes/head
+		if settings.spa
+			script(src=getStaticURL("html", "/static/js/post_overlay.js") type="module")
+		else
+			script(src=getStaticURL("html", "/static/js/pagination.js") type="module")
+		meta(property="og:url" content=`${constants.website_origin}/u/${user.data.username}`)
+		meta(property="og:type" content="profile")
+		meta(property="og:title" content=(user.data.full_name || user.data.username))
+		if user.data.biography
+			meta(property="og:description" content=user.data.biography)
+		meta(property="og:image" content=`${constants.website_origin}${user.proxyProfilePicture}`)
+		meta(property="og:image:width" content=150)
+		meta(property="og:image:height" content=150)
+		meta(property="og:image:type" content="image/jpeg")
+		meta(property="og:site_name" content="Bibliogram")
+
+	body
+		nav(class=(settings.display_top_nav ? "always-displayed" : "")).top-nav
+			//- Alt text guidelines from https://axesslab.com/alt-texts/
+			a(href="/").nav-icon-link
+				img(src="/static/img/logo-circle-min.svg" alt="Bibliogram").logo
+			a(href=settingsReferrer).nav-icon-link
+				img(src="/static/img/settings.svg" alt=ll.t_settings).settings
+		.main-divider
+			header.profile-overview
+				.profile-sticky
+					section
+						img(src=user.proxyProfilePicture width=150 height=150 alt=`${user.data.full_name || user.data.username}'s profile picture.`).pfp
+						//-
+							Instagram only uses the above URL, but an HD version is also available.
+							The alt text is pathetic, I know. I don't have much to work with.
+						if user.data.full_name
+							h1.full-name= user.data.full_name
+							h2.username
+								= `@${user.data.username}`
+								if user.data.is_verified
+									+verified-badge("as-username")
+						else
+							h1.full-name
+								= `@${user.data.username}`
+								if user.data.is_verified
+									+verified-badge("as-fullname")
+						p.structured-text.bio
+							- const bio = user.getStructuredBio()
+							if bio
+								+display_structured(bio)
+						- const userURL = user.getRewriteLink(settings)
+						if userURL
+							p.website
+								a(href=userURL)= userURL
+						if user.posts != undefined
+							div.profile-counter
+								| #[span(data-numberformat=user.posts).count #{numberFormat(user.posts)} ]
+								= ll.post_counter_label
+						if followerCountsAvailable
+							if user.following != undefined
+								div.profile-counter
+									| #[span(data-numberformat=user.following).count #{numberFormat(user.following)} ]
+									= ll.outgoing_follows_counter_label
+							if user.followedBy != undefined
+								div.profile-counter
+									| #[span(data-numberformat=user.followedBy).count #{numberFormat(user.followedBy)} ]
+									= ll.incoming_follows_counter_label
+						else
+							div.profile-counter.not-available Followers not available.
+						.links
+							if constants.feeds.enabled && constants.feeds.display_links
+								+feed_link("RSS", "rss", user.data.username, "application/rss+xml", constants.feeds.display_validation_links)
+								+feed_link("Atom", "atom", user.data.username, "application/atom+xml", constants.feeds.display_validation_links)
+							a(rel="noreferrer noopener" href=`https://www.instagram.com/${user.data.username}` target="_blank") instagram.com
+					section.bibliogram-meta
+						.links
+							a(href="/")= ll.t_home
+							a(href=settingsReferrer)= ll.t_settings
+						if constants.quota.enabled
+							.quota Quota left: #[span#quota= remaining]
+
+			- const hasPosts = !user.data.is_private && selectedTimeline.pages.length && selectedTimeline.pages[0].length
+			.timeline-section(dir=ll.meta_direction)
+				.selector-container
+					+selector-button(ll.tab_timeline, "timeline", "")
+					if user.data.has_channel !== false
+						+selector-button(ll.tab_igtv, "igtv", "/channel")
+
+				main(class=hasPosts ? "" : "no-posts")#timeline.timeline
+					if hasPosts
+						each page, pageIndex in selectedTimeline.pages
+							+timeline_page(page, pageIndex)
+						+next_page_button(user, selectedTimeline, url, type)
+					else
+						div
+							div.page-number
+								span.number
+									if user.data.is_private
+										= ll.profile_is_private_notice
+									else
+										= ll.no_posts_notice

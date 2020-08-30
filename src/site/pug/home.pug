@@ -1,0 +1,87 @@
+//- Needs rssEnabled, allUnblocked, torAvailable, hasPrivacyPolicy, onionLocation
+
+- const ll = lang.get(settings.language)
+
+doctype html
+html
+	head
+		title Bibliogram
+		include includes/head
+		meta(property="og:url" content=`${constants.website_origin}`)
+		meta(property="og:type" content="website")
+		meta(property="og:title" content="Bibliogram")
+		meta(property="og:description" content=`Bibliogram is a website that takes data from Instagram's public profile views and puts it into a friendlier page that loads faster, gives downloadable images, eliminates ads, generates RSS feeds, and doesn't urge you to sign up.`)
+		meta(property="og:image" content=`${constants.website_origin}/android-chrome-192x192.png`)
+		meta(property="og:image:width" content=192)
+		meta(property="og:image:height" content=192)
+		meta(property="og:image:type" content="image/png")
+		meta(property="og:site_name" content="Bibliogram @ Endless")
+	body.homepage
+		header
+			h1.banner
+				img.banner-image(src="/static/img/banner-min.svg" alt="Bibliogram")
+
+		.go-sections-container(dir=ll.meta_direction)
+			.go-sections
+				section
+					h2.title= ll.go_to_profile
+					form(method="get" action="/u" class=`dir-${ll.meta_direction}`).pair-entry
+						input(type="text" name="u" placeholder=ll.go_username_or_url).text
+						input(type="submit" value=ll.go_button).button
+				section
+					h2.title= ll.go_to_post
+					form(method="get" action="/p" class=`dir-${ll.meta_direction}`).pair-entry
+						input(type="text" name="p" placeholder=ll.go_shortcode_or_url).text
+						input(type="submit" value=ll.go_button).button
+
+		.about-container(dir=ll.meta_direction)
+			section.about
+				h2= ll.about_bibliogram_header
+				!= ll.pug_about_bibliogram_content({link_to_featured_profiles: constants.featured_profiles.length})
+				h2= ll.about_this_instance_header
+				p.
+					This instance is operated by <a href="https://austinhuang.me">Austin Huang</a> on a host provided
+					by <a href="https://theendlessweb.com">Endless Hosting</a>. Check out their hosting plans too!
+				ul
+					if onionLocation
+						li: a(href=onionLocation)= ll.onion_site_available
+					li: a(href=settingsReferrer)= ll.t_settings
+					if hasPrivacyPolicy
+						li: a(href="/privacy")= ll.t_privacy_policy
+					else
+						li= ll.has_not_written_privacy_policy
+					if allUnblocked
+						li= ll.instance_not_blocked
+					else
+						li: a(href="https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instagram%20rate%20limits.md#tldr-what-does-it-mean-if-an-instance-is-blocked")= ll.instance_partially_blocked
+					if rssEnabled
+						li= ll.rss_enabled
+					else
+						li= ll.rss_disabled
+
+				h2= ll.external_links_header
+				ul
+					-
+						const links = [
+							["https://sr.ht/~cadence/bibliogram/", ll.source_link, "noopener noreferrer"],
+							["https://matrix.to/#/#bibliogram:matrix.org", ll.matrix_link, "noopener noreferrer"],
+							["https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instances.md", ll.instances_link, "noopener noreferrer"],
+							["https://cadence.moe/about/contact", ll.contact_link, "noopener noreferrer"]
+						]
+					each entry in links
+						li: a(href!=entry[0] target="_blank" rel=entry[2])= entry[1]
+
+				if constants.featured_profiles.length
+					.featured-profiles#featured-profiles
+						h2.featured-profiles-header= ll.featured_profiles_header
+
+						table.featured-profile-table
+							tbody
+								each profile in constants.featured_profiles
+									tr
+										td.username: a(href=`/u/${profile.username}`) @#{profile.username}
+										td= profile.description
+
+						details
+							summary= ll.featured_profiles_whats_this
+							.details-content!= ll.html_featured_profiles_disclaimer

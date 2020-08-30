@@ -1,0 +1,883 @@
+@use "forms"
+@use "dimensions" as *
+
+$theme: () !default
+
+@font-face
+	font-family: "Bariol"
+	font-display: swap
+	src: url(/static/fonts/bariol.woff2) format("woff2"), url(/static/fonts/bariol.ttf) format("truetype")
+
+body, input, button, textarea
+	font-family: "Bariol", sans-serif
+
+summary
+	text-decoration: underline
+
+body
+	margin: 0
+	padding: 0
+	font-size: 18px
+
+.main-divider
+	display: flex
+	flex-direction: column
+	min-height: 100vh
+
+	@media screen and (min-width: $layout-b-min)
+		display: grid
+		grid-template-columns: 235px 1fr
+
+.pfp
+	border-radius: 50%
+
+@mixin link-button
+	color: map-get($theme, "foreground-power-primary")
+	background-color: map-get($theme, "background-power-primary")
+	border: 1px solid map-get($theme, "background-power-secondary")
+	padding: 12px
+	border-radius: 10px
+	line-height: 1
+	text-decoration: none
+
+	&.disabled
+		cursor: default
+
+	&:hover:not(.disabled), &:active, &:focus, &.clicked
+		color: map-get($theme, "foreground-power-secondary")
+		background-color: map-get($theme, "background-power-secondary")
+		border-color: map-get($theme, "background-power-tertiary")
+
+.top-nav
+	background-color: map-get($theme, "background-power-primary")
+	position: relative
+	z-index: 1
+	box-shadow: map-get($theme, "shadow-down")
+	border-bottom: map-get($theme, "edge-context-divider")
+	padding: 6px 12px
+	justify-content: space-between
+	align-items: center
+
+	display: none
+
+	@media screen and (max-width: $layout-a-max)
+		display: flex
+
+	&.always-displayed
+		display: flex
+
+	.logo
+		width: 48px
+		height: 48px
+
+	.settings
+		width: 36px
+		height: 36px
+
+	.nav-icon-link
+		display: flex
+
+.profile-overview
+	text-align: center
+	position: relative
+	line-height: 1
+	color: map-get($theme, "foreground-primary")
+	background-color: map-get($theme, "background-timeline-profile")
+
+	@media screen and (max-width: $layout-a-max)
+		border-bottom: map-get($theme, "edge-context-divider")
+		box-shadow: map-get($theme, "shadow-down")
+		padding-bottom: 25px
+
+	@media screen and (min-width: $layout-b-min)
+		border-right: map-get($theme, "edge-context-divider")
+		box-shadow: map-get($theme, "shadow-right")
+
+	.profile-sticky
+		position: sticky
+		top: 0
+		height: 100vh
+		box-sizing: border-box
+		overflow-y: auto
+		padding: 10px
+		white-space: pre-line
+		overflow-wrap: break-word
+
+		@media screen and (max-width: $layout-a-max)
+			height: unset
+
+		a, a:visited
+			color: map-get($theme, "link-primary")
+
+		.pfp
+			margin: 25px 0
+
+		.full-name
+			margin: 0 0 8px
+			font-size: 30px
+			color: map-get($theme, "foreground-header")
+
+		.username
+			margin: 0
+			font-size: 20px
+			font-weight: normal
+			color: map-get($theme, "foreground-header")
+
+		.verified-badge
+			position: relative
+			user-select: none
+			margin-left: 4px
+
+			&.as-username
+				top: 4px
+
+			&.as-fullname
+				top: 1px
+
+
+		.bio
+			margin: 20px 0px
+			unicode-bidi: plaintext
+
+		.profile-counter
+			line-height: 1.3
+			unicode-bidi: plaintext
+
+			&.not-available
+				font-style: italic
+
+			.count
+				font-weight: bold
+
+		.website
+			margin: 20px 0px
+
+		.links
+			margin: 15px 0px
+			display: flex
+			flex-wrap: wrap
+			justify-content: center
+
+			.validate-feed
+				margin-left: 2px
+
+			> *
+				margin: 5px 8px
+
+		.quota
+			margin: 15px 0px
+
+		.bibliogram-meta
+			margin: 20px 10px
+			border-top: map-get($theme, "edge-context-divider")
+
+			@media screen and (max-width: $layout-a-max)
+				display: none
+
+.timeline-section
+	background-color: map-get($theme, "background-primary")
+	padding: 0px 15px 40px
+	display: flex
+	flex-direction: column
+
+	@media screen and (max-width: $layout-a-max)
+		flex: 1
+
+	.selector-container
+		padding: 15px
+		display: flex
+		justify-content: center
+
+		.selector
+			background-color: map-get($theme, "background-primary")
+			color: map-get($theme, "foreground-primary")
+			text-decoration: none
+			padding: 10px 10px 13px
+			line-height: 1
+			font-size: 22px
+			border: 1px solid transparent
+			border-bottom: 1px solid map-get($theme, "foreground-timeline-page")
+			margin: 0px 10px
+			box-shadow: map-get($theme, "shadow-down-only")
+			border-radius: 5px
+
+			&:hover, &:focus
+				border: 1px solid map-get($theme, "foreground-timeline-page")
+
+			&.active
+				background-color: map-get($theme, "background-power-primary")
+				color: map-get($theme, "foreground-power-primary")
+				cursor: default
+				border: 1px solid map-get($theme, "foreground-timeline-page")
+
+			&:hover, &:focus, &.active
+				padding-bottom: 10px
+				border-bottom: 4px solid map-get($theme, "foreground-primary")
+
+	.page-number
+		color: map-get($theme, "foreground-timeline-page")
+		line-height: 1
+		max-width: 600px
+		margin: 0px auto
+		padding: 20px 0px // separate margin and padding for better page hash jump locations
+		text-align: center
+		position: relative
+
+		&::before
+			position: absolute
+			display: block
+			content: ""
+			left: 0
+			right: 0
+			top: 50%
+			border-top: 1px solid
+
+		.number
+			position: relative
+			z-index: 1
+			padding: 10px
+			background-color: map-get($theme, "background-primary")
+
+	.timeline
+		--image-size: 260px
+		$image-size: var(--image-size)
+		flex: 1
+
+		@media screen and (max-width: $layout-a-max)
+			--image-size: 150px
+
+		@media screen and (max-width: $layout-c-max)
+			--image-size: calc(33vw - 10px)
+
+		&.no-posts
+			display: flex
+			flex-direction: column
+			justify-content: center
+
+		.next-page-container
+			margin: 20px 0px
+			display: flex
+			justify-content: center
+
+			.next-page
+				@include link-button
+				font-size: 18px
+				text-align: center
+
+		.timeline-inner
+			display: flex
+			justify-content: center
+			flex-wrap: wrap
+			margin: 0 auto
+
+			&.three-columns
+				max-width: 810px
+
+				@media screen and (max-width: $layout-a-max)
+					max-width: 480px
+
+			&.four-columns
+				max-width: 1080px
+
+			&.six-columns
+				max-width: 1620px
+
+			@media screen and (max-width: $layout-c-max)
+				display: grid
+				grid-template-columns: repeat(3, 1fr)
+				justify-content: center
+				justify-items: center
+
+			@mixin sized()
+				width: $image-size
+				height: $image-size
+
+			.sized-link
+				$margin: 5px
+
+				margin: $margin
+				color: map-get($theme, "foreground-thumbnail-alt")
+				border: 0px map-get($theme, "edge-thumbnail-hover")
+				background-color: map-get($theme, "background-timeline-loading")
+				text-decoration: none
+				overflow: hidden
+				@include sized
+
+				&:hover, &:focus
+					$border-width: 3px
+					margin: $margin - $border-width
+					border-width: $border-width
+
+				@media screen and (max-width: $layout-c-max)
+					$margin: 2px
+					margin: $margin
+
+					&:hover, &:focus
+						$border-width: 2px
+						margin: $margin - $border-width
+						border-width: $border-width
+
+				.sized-image
+					@include sized
+
+.post-page
+	background-color: map-get($theme, "background-post-distraction")
+
+.post-page-divider
+	display: grid
+	grid-template-columns: 360px auto
+	max-width: 1200px
+	margin: 0 auto
+	min-height: 100vh
+
+	@media screen and (max-width: $layout-a-max)
+		display: flex
+		flex-direction: column
+
+	&.caption-on-right
+		grid-template-columns: auto 360px
+
+		.description-section
+			order: 1
+
+	.description
+		margin: 12px
+		white-space: pre-line
+		overflow-wrap: anywhere
+		font-size: 20px
+		line-height: 1.4
+		unicode-bidi: plaintext
+
+		@media screen and (min-width: $layout-b-min)
+			padding-bottom: 20px
+
+		@media screen and (max-width: $layout-a-max)
+			font-size: 18px
+
+	.description-section
+		display: grid
+		align-items: stretch
+		align-content: stretch
+		grid-template-rows: auto 1fr
+		position: sticky
+		top: 0
+		height: 100vh
+		box-sizing: border-box
+
+		@media screen and (max-width: $layout-a-max)
+			display: contents // this is absolutely disgusting
+			position: inherit
+			top: inherit
+			height: inherit
+
+		.user-header
+			display: grid
+			align-items: center
+			grid-template-columns: auto 1fr auto
+			justify-content: center
+			background-color: map-get($theme, "background-post-header")
+			padding: 10px
+			position: sticky
+			top: 0
+			border-bottom: map-get($theme, "edge-context-divider")
+
+			@media screen and (max-width: $layout-a-max)
+				box-shadow: map-get($theme, "shadow-down")
+
+			.navigate-posts
+				-webkit-appearance: none
+				-moz-appearance: none
+				border: none
+				margin: 0
+				padding: 0
+				cursor: pointer
+				background: none
+
+				.icon
+					display: block
+
+					&.previous
+						transform: rotate(180deg)
+
+			.user-header-inner
+				grid-row: 1
+				grid-column: 2
+				display: flex
+				align-items: center
+				justify-content: center
+				margin: 0px 10px
+
+				.pfp
+					$size: 40px
+
+					width: $size
+					height: $size
+					margin-right: 10px
+					background-color: map-get($theme, "background-post-pfp-loading")
+
+				.name
+					font-size: 20px
+					color: map-get($theme, "foreground-post-header")
+					text-decoration: none
+
+					&:hover
+						text-decoration: underline
+
+		.relative-box
+			background-color: map-get($theme, "background-post-caption")
+			color: map-get($theme, "foreground-primary")
+
+			@media screen and (min-width: $layout-b-min)
+				position: relative
+				box-shadow: map-get($theme, "shadow-down-inset")
+
+				.scrolling-box
+					position: absolute
+					top: 0
+					bottom: 0
+					overflow-y: auto
+					display: grid
+					align-items: center
+
+	.images-gallery
+		display: flex
+		flex-direction: column
+		align-items: center
+		justify-content: center
+		background-color: map-get($theme, "background-post-gallery")
+		padding: 10px
+
+		@media screen and (max-width: $layout-a-max)
+			flex: 1
+			position: relative
+
+		.sized-image, .sized-video
+			color: map-get($theme, "foreground-gallery-alt")
+			background-color: map-get($theme, "background-post-loading")
+			max-height: 94vh
+			max-width: 100%
+
+			&:not(:last-child)
+				margin-bottom: 10px
+
+		.sized-image
+			width: auto
+			height: auto
+
+		.sized-video
+			width: auto
+			height: auto
+
+		.alt-in-gallery
+			color: map-get($theme, "foreground-gallery-alt")
+			padding: 0px 50px
+			margin: 0px 0px 50px
+			text-align: center
+			font-size: 20px
+
+.error-page
+	box-sizing: border-box
+	min-height: 100vh
+	background: map-get($theme, "background-error-page")
+	padding: 10px
+	text-align: center
+	display: flex
+	flex-direction: column
+	justify-content: center
+	align-items: center
+
+	a, a:visited
+		color: map-get($theme, "link-error-page")
+
+	p
+		white-space: pre-line
+
+	code, pre
+		font-size: 0.8em
+		padding: 3px 5px
+		background-color: rgba(255, 255, 255, 0.15)
+		border-radius: 3px
+
+	pre
+		white-space: pre-line
+
+	.code, .message, .explanation, .back-link
+		line-height: 1.2
+		margin: 0px
+
+	.code
+		font-size: 80px
+		color: map-get($theme, "foreground-error-code")
+		margin-bottom: 25px
+
+	.message
+		font-size: 35px
+		color: map-get($theme, "foreground-error-message")
+
+	.explanation
+		line-height: 1.3
+		margin-top: 10px
+		font-size: 20px
+		color: map-get($theme, "foreground-error-explanation")
+
+	.back
+		margin-top: 40px
+		font-size: 25px
+
+	.width-block
+		max-width: 600px
+		text-align: left
+		color: map-get($theme, "foreground-error-explanation")
+		margin-top: 10px
+		font-size: 20px
+
+	.hidden-section
+		display: none
+		padding: 10px
+
+		&:target
+			display: block
+
+.error-fragment
+	text-align: center
+	padding: 30px 10px
+
+	.message
+		font-size: 32px
+		margin-bottom: 10px
+
+	.explanation
+		font-size: 20px
+		white-space: pre-line
+		line-height: 1.3
+
+.homepage
+	display: flex
+	flex-direction: column
+	min-height: 100vh
+	background-color: map-get($theme, "background-power-primary")
+	color: map-get($theme, "foreground-power-primary")
+
+	h1
+		font-size: 48px
+		margin: 0px
+
+	h2
+		font-size: 32px
+		margin: 0px
+
+	a, a:visited
+		color: map-get($theme, "link-power")
+
+	.banner
+		padding: 0px 4vw
+		height: 60vmin
+		display: flex
+		justify-content: center
+		align-items: center
+
+		.banner-image
+			max-width: 100%
+
+		@media screen and (max-width: $layout-home-a-max)
+			height: 35vmin
+
+	.go-sections-container
+		padding: 0px 10px 50px
+
+		.go-sections
+			max-width: 900px
+			margin: 0px auto
+			display: grid
+			grid-gap: 10px
+			grid-template-columns: repeat(2, 1fr)
+			justify-items: center
+
+			@media screen and (max-width: $layout-home-a-max)
+				grid-template-columns: 1fr
+
+			.title
+				text-align: center
+				margin-bottom: 20px
+
+			.pair-entry
+				display: flex
+
+				.text, .button
+					-webkit-appearance: none
+					-moz-appearance: none
+					display: flex
+					padding: 8px
+					line-height: 1
+					box-sizing: content-box
+					font-size: 20px
+					height: 20px
+					border: map-get($theme, "edge-go-control")
+					color: map-get($theme, "foreground-go-control")
+
+				.text
+					max-width: 230px
+					width: 30vw
+					background-color: map-get($theme, "background-go-input")
+
+					@media screen and (max-width: 520px)
+						width: 80vw
+
+				&.dir-ltr .text
+					border-right: none
+					border-radius: 6px 0px 0px 6px
+
+				&.dir-rtl .text
+					border-left: none
+					border-radius: 0px 6px 6px 0px
+
+				.button
+					padding-left: 12px
+					padding-right: 12px
+					cursor: pointer
+					background-color: map-get($theme, "background-power-palest")
+
+					&:hover
+						background-color: map-get($theme, "background-power-pale")
+
+				&.dir-ltr .button
+					border-radius: 0px 6px 6px 0px
+
+				&.dir-rtl .button
+					border-radius: 6px 0px 0px 6px
+
+	.about-container
+		background-color: map-get($theme, "background-power-secondary")
+		color: map-get($theme, "foreground-power-secondary")
+		padding: 50px 20px
+		flex: 1
+		min-height: 60vh
+
+		.about
+			max-width: 700px
+			margin: 0px auto
+			line-height: 1.4
+			font-size: 20px
+
+			.example-link
+				white-space: nowrap
+
+			.link-list
+				color: map-get($theme, "link-power")
+
+	.featured-profiles
+		margin-bottom: 20px
+		line-height: 1.4
+
+		&:target
+			background-color: map-get($theme, "background-power-highlight")
+			margin: -6px -16px 14px
+			padding: 5px 15px
+			border-radius: 10px
+			border: map-get($theme, "edge-power-border")
+
+			.featured-profiles-header::before
+				content: "» "
+
+		summary
+			color: map-get($theme, "link-power")
+			padding-left: 2px
+
+		.featured-profile-table
+			line-height: 1.4
+			margin: 1em 0px 1px 1em
+
+			@media screen and (max-width: $layout-c-max)
+				line-height: 1.15
+				margin: 1em 0px 1px 15px
+				text-indent: -15px
+
+				tr
+					display: block
+					margin-bottom: 10px
+
+				td
+					display: inline
+
+		.username
+			padding-right: 6px
+
+.structured-text
+	a, a:visited
+		color: map-get($theme, "link-primary")
+		text-decoration: none
+
+	a:link, a:link:visited
+		text-decoration: underline
+
+	.link-to-hashtag
+		color: map-get($theme, "link-hashtag")
+
+.privacy-policy
+	max-width: 700px
+	min-height: 100vh
+	margin: 0px auto
+	padding: 0px 10px 80px
+	font-size: 20px
+	line-height: 1.4
+	background-color: map-get($theme, "background-power-tertiary")
+	color: map-get($theme, "foreground-power-tertiary")
+
+	h1, h2, h3
+		color: map-get($theme, "foreground-header-privacy")
+
+	h1
+		margin: 40px 0px
+		font-size: 48px
+
+	a, a:visited
+		color: map-get($theme, "link-power")
+
+	code
+		font-size: 0.8em
+		background-color: map-get($theme, "background-power-quote")
+		padding: 3px 5px
+		border-radius: 5px
+		color: map-get($theme, "foreground-power-secondary")
+
+	.return-home
+		line-height: 1
+		margin-top: 45px
+		padding-top: 15px
+		border-top: map-get($theme, "edge-power-divider")
+
+.post-overlay
+	position: fixed
+	top: 0
+	left: 0
+	right: 0
+	bottom: 0
+	background: map-get($theme, "background-post-overlay")
+	z-index: 10
+	overflow-y: scroll
+
+	&:not(.loading) > *
+		min-height: 100vh
+
+	&.loading
+		display: flex
+		justify-content: center
+		align-items: center
+
+	.loading-inner
+		color: map-get($theme, "foreground-alert")
+		font-size: 30px
+		line-height: 1
+		padding: 26px
+		border-radius: 20px
+		border: map-get($theme, "edge-alert")
+		font-weight: bold
+		background-color: map-get($theme, "background-alert")
+
+.article-page
+	background-color: map-get($theme, "background-primary")
+	font-size: 22px
+	line-height: 1.4
+	color: map-get($theme, "foreground-primary")
+	min-height: 100vh
+
+	h1
+		text-align: center
+		margin: 0
+		font-size: 50px
+
+	h2
+		font-size: 34px
+		margin: 0
+		color: map-get($theme, "foreground-header")
+
+	header
+		background-color: map-get($theme, "background-power-secondary")
+		color: map-get($theme, "foreground-power-primary")
+		padding: 40px 10px
+		line-height: 1.2
+
+	.article-main
+		max-width: 800px
+		margin: 0 auto
+		padding: 20px 20px 100px
+
+	a, a:visited
+		color: map-get($theme, "link-primary")
+
+	code
+		font-size: 0.8em
+		letter-spacing: -0.2px
+		background: map-get($theme, "background-primary-quote")
+		color: map-get($theme, "foreground-primary-quote")
+		padding: 0px 4px
+		border-radius: 2px
+
+.settings-page
+	background-color: map-get($theme, "background-primary")
+	color: map-get($theme, "foreground-primary")
+
+	h1, legend
+		color: map-get($theme, "foreground-header")
+
+	a, a:visited
+		color: map-get($theme, "link-primary")
+
+	.settings
+		padding: 0px 10px 50px
+		max-width: 600px
+		margin: 0 auto
+
+	.status-notice
+		padding: 15px
+		font-size: 24px
+		line-height: 1.36
+		text-align: center
+		color: map-get($theme, "foreground-banner")
+		white-space: pre-line
+
+		&.success
+			background-color: map-get($theme, "background-banner-success")
+
+		&.fail
+			background-color: map-get($theme, "background-banner-fail")
+
+	.action-container
+		margin-top: 20px
+		display: grid
+		grid-template-columns: 1fr auto auto
+		grid-gap: 10px
+		align-items: center
+
+		@media screen and (max-width: 400px)
+			display: flex
+			flex-direction: column
+			align-items: stretch
+			text-align: center
+
+			.home-link-container
+				order: 1
+
+		.save-button
+			padding: 12px 32px
+			&:not(:active)
+				@include forms.curve-out-major
+
+		.home-link
+			font-size: 21px
+
+.details-content
+	border: map-get($theme, "edge-power-border")
+	margin-top: 5px
+	padding: 15px 20px
+	border-radius: 5px
+	line-height: 1.4
+
+	p
+		margin: 0.6em 0
+
+	> p:first-child
+		margin-top: 0
+
+	> p:last-child
+		margin-bottom: 0

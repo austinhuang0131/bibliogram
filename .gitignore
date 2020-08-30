@@ -1,0 +1,27 @@
+# Code stuff
+node_modules
+.vscode
+
+# Personalisation stuff
+/src/site/pug/privacy.pug
+/src/site/pug/announcements
+
+# Database stuff
+db/**/*.db*
+users_export.json*
+*.log
+*.csv
+
+# Test stuff
+/coverage
+/.nyc_output
+/test/screenshots/diff
+/test/screenshots/staging
+/test/screenshots/final
+/src/lib/utils/saved_requests/files
+
+# My stuff
+/personal
+
+# MacOS bad
+.DS_Store

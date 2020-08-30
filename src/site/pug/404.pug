@@ -1,0 +1,14 @@
+//- Needs path, couldBeUsername
+
+include includes/error
+
+doctype html
+html
+	head
+		title Not found | Bibliogram
+		include includes/head
+
+	body.error-page
+		+error(404, "Page not found.")
+			if couldBeUsername
+				| Trying to access a user? #[a(href=`/u${path}`) Visit @#{path.slice(1)}]

@@ -1,0 +1,10 @@
+mixin error(statusCode, message, withInstancesLink)
+	h1.code= statusCode
+	p.message= message
+	if block || withInstancesLink
+		p.explanation
+			if block
+				block
+			if withInstancesLink
+				a(href="https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instances.md") You could try browsing Bibliogram on another instance.
+	a(href="/").back ↵ Return home

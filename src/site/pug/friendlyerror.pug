@@ -1,0 +1,13 @@
+//- Needs title, message, statusCode, ?explanation, withInstancesLink
+
+include includes/error.pug
+
+doctype html
+html
+	head
+		title= `${title} | Bibliogram`
+		include includes/head
+	body.error-page
+		+error(statusCode, message, withInstancesLink)
+			if explanation
+				=explanation

@@ -1,0 +1,38 @@
+//- Needs website_origin, instancesURL, username, expiresMinutes?
+
+include includes/error.pug
+
+doctype html
+html#bibliogram-identifier-blocked
+	head
+		title= `Blocked | Bibliogram`
+		include includes/head
+		script(src=getStaticURL("html", "/static/js/user_available_waiter.js") type="module")
+	body
+		div(data-username=username)#data
+		.error-page
+			h1.code 503
+			p.message Blocked by Instagram
+			p.explanation
+				| Instagram is temporarily refusing to provide data to this server.
+
+			.width-block
+				#dynamic-status-area
+
+				ul
+					li
+						| #[a(href="#unblock-on-mac-or-linux") Unblock with shell], no download, Mac and Linux only
+						.hidden-section#unblock-on-mac-or-linux
+							p Open the Terminal application, then paste this code:
+							pre curl -Ss #{website_origin}/u/#{username}/unblock.sh | bash
+					li
+						| #[a(href="#unblock-with-userscript") Unblock automatically with userscript], any modern browser
+						.hidden-section#unblock-with-userscript
+							p If you don't already have a userscript manager, install #[a(href="https://violentmonkey.github.io/get-it/") Violentmonkey] (open source) or #[a(href="https://www.tampermonkey.net/") Tampermonkey] (closed source)
+							p #[a(href="/userscripts/unblock.user.js") Open this link.] You should be prompted to install the script. Press "Confirm installation" on that page.
+							p Reload this page.
+					li To learn more, #[a(href="https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instagram%20rate%20limits.md#tldr-what-does-it-mean-if-an-instance-is-blocked") read about blocking.]
+					li You may be able to avoid this by #[a(href="https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instances.md") browsing on another instance.]
+					li It's good to read scripts to see what they do. #[a(href=`${website_origin}/u/${username}/unblock.sh`) Read ./unblock.sh]
+
+			a(href="/").back ↵ Return home
