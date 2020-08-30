@@ -1,61 +1,8 @@
-# [Bibliogram](https://bibliogram.art)
+Temporary Bibliogram fork.
 
-[![Humane Tech badge.](https://meta.bibliogram.art/art/humane-tech-badge.svg)](https://github.com/humanetech-community/awesome-humane-tech#readme)
-![License: AGPL.](https://img.shields.io/badge/license-AGPL-%233897f0)
-[![Discussion on Matrix.](https://img.shields.io/matrix/bibliogram:matrix.org?label=%23bibliogram&logo=matrix)](https://matrix.to/#/#bibliogram:matrix.org)
+I may or may not continue development on this repo.
 
-## Navigation
-
-- [Bibliogram project on sourcehut][project]
-- › Bibliogram code repository
-- [Bibliogram issues tracker][issues]
-- [Bibliogram development mailing list][list]
-- [Updater code repository][updater repo]
-- [Full documentation][docs folder]
-- [Discussion on Matrix][matrix]
-
-[project]: https://sr.ht/~cadence/bibliogram/
-[main repo]: https://git.sr.ht/~cadence/bibliogram
-[issues]: https://todo.sr.ht/~cadence/bibliogram-issues
-[list]: https://lists.sr.ht/~cadence/bibliogram-devel
-[updater repo]: https://git.sr.ht/~cadence/bibliogram-updater
-[docs folder]: https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs
-
-## Bibliogram is an alternative front-end for Instagram.
-
-Bibliogram works without browser JavaScript, has no ads or tracking,
-and doesn't urge you to sign up.
-
-See Bibliogram's features: [`docs/Features.md`][features]
-
-[features]: https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Features.md
-
-Join the Bibliogram discussion room on Matrix:
-[#bibliogram:matrix.org][matrix]
-
-[matrix]: https://matrix.to/#/#bibliogram:matrix.org
-
-See also: [Invidious, a front-end for YouTube.][invidious repo]
-
-[invidious repo]: https://github.com/omarroth/invidious
-
-## Instances
-
-The official instance is on
-[https://bibliogram.art](https://bibliogram.art).
-
-Community instances are listed in [`docs/Instances.md`][instances].
-Submit a patchset to add your own instance to that list.
-
-[instances]: https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instances.md
-
-## Installing
-
-See [`docs/Installing (basic).md`][basic] and
-[`docs/Installing (extended).md`][extended].
-
-[basic]: https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Installing%20%28basic%29.md
-[extended]: https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Installing%20%28extended%29.md
+Bibliogram is originally made by [Cadence Ember](https://cadence.moe) and licensed under APGLv3.0.
 
 ## Credits & license information
 
