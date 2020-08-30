@@ -1,0 +1,76 @@
+//- Needs hashtag, selectedTimeline, type, url, constants, settings
+
+include includes/timeline_page.pug
+include includes/next_page_button.pug
+include includes/display_structured
+include includes/feed_link
+
+- const ll = lang.get(settings.language)
+- const numberFormat = new Intl.NumberFormat().format
+
+mixin selector-button(text, selectorType, urlSuffix)
+	a(href=(type !== selectorType && `/h/${hashtag.data.name}${urlSuffix}`) class=(type === selectorType && "active")).selector= text
+
+doctype html
+html
+	head
+		title= `#${hashtag.data.name} | Bibliogram`
+		include includes/head
+		if settings.spa
+			script(src=getStaticURL("html", "/static/js/post_overlay.js") type="module")
+		else
+			script(src=getStaticURL("html", "/static/js/pagination.js") type="module")
+		meta(property="og:url" content=`${constants.website_origin}/h/${hashtag.data.name}`)
+		meta(property="og:type" content="profile")
+		meta(property="og:title" content=`#${hashtag.data.name}`)
+		meta(property="og:image" content=`${constants.website_origin}${hashtag.proxyProfilePicture}`)
+		meta(property="og:image:width" content=150)
+		meta(property="og:image:height" content=150)
+		meta(property="og:image:type" content="image/jpeg")
+		meta(property="og:site_name" content="Bibliogram")
+
+	body
+		nav(class=(settings.display_top_nav ? "always-displayed" : "")).top-nav
+			//- Alt text guidelines from https://axesslab.com/alt-texts/
+			a(href="/").nav-icon-link
+				img(src="/static/img/logo-circle-min.svg" alt="Bibliogram").logo
+			a(href=settingsReferrer).nav-icon-link
+				img(src="/static/img/settings.svg" alt=ll.t_settings).settings
+		.main-divider
+			header.profile-overview
+				.profile-sticky
+					section
+						img(src=hashtag.proxyProfilePicture width=150 height=150 alt=`${hashtag.data.name}'s hashtag picture.`).pfp
+						h1.full-name= "#"+hashtag.data.name
+						if hashtag.posts != undefined
+							div.profile-counter
+								| #[span(data-numberformat=hashtag.posts).count #{numberFormat(hashtag.posts)} ]
+								= ll.post_counter_label
+						.links
+							if constants.feeds.enabled && constants.feeds.display_links
+								+feed_link("RSS", "rss", "h/"+hashtag.data.name, "application/rss+xml", constants.feeds.display_validation_links)
+								+feed_link("Atom", "atom", "h/"+hashtag.data.name, "application/atom+xml", constants.feeds.display_validation_links)
+							a(rel="noreferrer noopener" href=`https://www.instagram.com/explore/tags/${hashtag.data.name}` target="_blank") instagram.com
+					section.bibliogram-meta
+						.links
+							a(href="/")= ll.t_home
+							a(href=settingsReferrer)= ll.t_settings
+						if constants.quota.enabled
+							.quota Quota left: #[span#quota= remaining]
+
+			- const hasPosts = !hashtag.data.is_private && selectedTimeline.pages.length && selectedTimeline.pages[0].length
+			.timeline-section(dir=ll.meta_direction)
+				.selector-container
+					+selector-button(ll.tab_timeline, "timeline", "")
+					+selector-button(ll.tab_popular, "popular", "/popular")
+
+				main(class=hasPosts ? "" : "no-posts")#timeline.timeline
+					if hasPosts
+						each page, pageIndex in selectedTimeline.pages
+							+timeline_page(page, pageIndex)
+						+next_page_button(null, hashtag, selectedTimeline, url, type)
+					else
+						div
+							div.page-number
+								span.number
+									= ll.no_posts_notice

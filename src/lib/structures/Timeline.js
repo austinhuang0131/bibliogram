@@ -20,17 +20,24 @@ function transformEdges(edges) {
 
 class Timeline {
 	/**
-	 * @param {import("./User")|import("./ReelUser")} user
+	 * @param {import("./User")|import("./ReelUser")|import("./Hashtag")} user
 	 * @param {string} type
 	 */
 	constructor(user, type) {
 		this.user = user
-		/** one of: "timeline", "igtv" */
+		/** users: one of: "timeline", "igtv" */
+		/** hashtags: one of: "timeline", "popular" */
 		this.type = type
 		/** @type {import("./TimelineEntry")[][]} */
 		this.pages = []
-		if (this.user.data.edge_owner_to_timeline_media) {
+		if (type === "popular" && this.user.data.edge_hashtag_to_top_posts) {
+			this.addPage(this.user.data.edge_hashtag_to_top_posts)
+		}
+		else if (this.user.data.edge_owner_to_timeline_media) {
 			this.addPage(this.user.data.edge_owner_to_timeline_media)
+		}
+		else if (this.user.data.edge_hashtag_to_media) {
+			this.addPage(this.user.data.edge_hashtag_to_media)
 		}
 	}
 
@@ -41,11 +48,12 @@ class Timeline {
 	fetchNextPage() {
 		if (!this.hasNextPage()) return constants.symbols.NO_MORE_PAGES
 		const method =
-			this.type === "timeline" ? collectors.fetchTimelinePage
+			this.type === "timeline" ? (!this.user.data.name ? collectors.fetchTimelinePage : collectors.fetchHashtagPage)
 			: this.type === "igtv" ? collectors.fetchIGTVPage
+			: this.type === "popular" ? collectors.fetchPopularPage
 			: null
 		const after = this.page_info ? this.page_info.end_cursor : ""
-		return method(this.user.data.id, after).then(({result: page, fromCache}) => {
+		return method(this.user.data.name ? this.user.data.name : this.user.data.id, after).then(({result: page, fromCache}) => {
 			const quotaUsed = fromCache ? 0 : 1
 			this.addPage(page)
 			return {page: this.pages.slice(-1)[0], quotaUsed}
@@ -79,7 +87,10 @@ class Timeline {
 	}
 
 	async fetchFeed() {
-		const setup = getFeedSetup(this.user.data.username, this.user.data.biography, constants.website_origin+this.user.proxyProfilePicture, new Date(this.user.cachedAt))
+		// temporary
+		const setup = this.user.data.name == null
+			? getFeedSetup("u", this.user.data.username, this.user.data.biography, constants.website_origin+this.user.proxyProfilePicture, new Date(this.user.cachedAt))
+			: getFeedSetup("h", this.user.data.name, "", constants.website_origin+this.user.proxyProfilePicture, new Date(this.user.cachedAt))
 		const feed = new Feed(setup)
 		const page = this.pages[0] // only get posts from first page
 		await Promise.all(page.map(item =>

@@ -88,8 +88,8 @@ html
 							div.profile-counter.not-available Followers not available.
 						.links
 							if constants.feeds.enabled && constants.feeds.display_links
-								+feed_link("RSS", "rss", user.data.username, "application/rss+xml", constants.feeds.display_validation_links)
-								+feed_link("Atom", "atom", user.data.username, "application/atom+xml", constants.feeds.display_validation_links)
+								+feed_link("RSS", "rss", "u/"+user.data.username, "application/rss+xml", constants.feeds.display_validation_links)
+								+feed_link("Atom", "atom", "u/"+user.data.username, "application/atom+xml", constants.feeds.display_validation_links)
 							a(rel="noreferrer noopener" href=`https://www.instagram.com/${user.data.username}` target="_blank") instagram.com
 					section.bibliogram-meta
 						.links
@@ -109,7 +109,7 @@ html
 					if hasPosts
 						each page, pageIndex in selectedTimeline.pages
 							+timeline_page(page, pageIndex)
-						+next_page_button(user, selectedTimeline, url, type)
+						+next_page_button(user, null, selectedTimeline, url, type)
 					else
 						div
 							div.page-number

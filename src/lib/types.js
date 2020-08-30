@@ -439,4 +439,13 @@
  * @property {string} username
  */
 
+ /**
+ * @typedef GraphHashtag
+ * @property {string} id
+ * @property {string} profile_pic_url
+ * @property {string} name
+ * @property {PagedEdges<TimelineEntryN1>} edge_hashtag_to_media
+ * @property {Edges<TimelineEntryN1>} edge_hashtag_to_top_posts
+ */
+
 module.exports = {}

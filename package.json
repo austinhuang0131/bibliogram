@@ -3,11 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/site/server.js",
   "scripts": {
-    "start": "cd src/site && node server.js",
-    "assistant": "cd src/site && node assistant.js",
-    "build-lang": "cd src/lang/utils && node build_base.js",
+    "start": "node src/site/server.js",
+    "assistant": "node src/site/assistant.js",
+    "build-lang": "node src/lang/utils/build_base.js",
     "test": "tap",
     "upload-test-files": "rsync -a src/lib/utils/saved_requests/files/ debib:meta/saved_requests; rsync -a test/screenshots/final/ debib:meta/screenshots",
     "download-test-files": "bash -c 'mkdir -p test/screenshots/{diff,final,staging} && rm test/screenshots/final/* && wget -q -r -nd -np -P test/screenshots/final -R html -R tmp https://meta.bibliogram.art/screenshots/'"

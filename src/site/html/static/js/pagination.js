@@ -79,13 +79,24 @@ class NextPage extends FreezeWidth {
 		this.freeze(this.element.getAttribute("data-loading-text"))
 		const type = this.element.getAttribute("data-type")
 
-		return fetch(`/fragment/user/${this.element.getAttribute("data-username")}/${this.nextPageNumber}?type=${type}`).then(res => res.text()).then(text => {
-			quota.change(-1)
-			q("#next-page-container").remove()
-			this.observer.disconnect()
-			q("#timeline").insertAdjacentHTML("beforeend", text)
-			this.controller.add()
-		})
+		if (this.element.getAttribute("data-username") != null) {
+			return fetch(`/fragment/user/${this.element.getAttribute("data-username")}/${this.nextPageNumber}?type=${type}`).then(res => res.text()).then(text => {
+				quota.change(-1)
+				q("#next-page-container").remove()
+				this.observer.disconnect()
+				q("#timeline").insertAdjacentHTML("beforeend", text)
+				this.controller.add()
+			})
+		}
+		else if (this.element.getAttribute("data-hashtag") != null) {
+			return fetch(`/fragment/hashtag/${this.element.getAttribute("data-hashtag")}/${this.nextPageNumber}?type=${type}`).then(res => res.text()).then(text => {
+				quota.change(-1)
+				q("#next-page-container").remove()
+				this.observer.disconnect()
+				q("#timeline").insertAdjacentHTML("beforeend", text)
+				this.controller.add()
+			})
+		}
 	}
 
 	activate() {

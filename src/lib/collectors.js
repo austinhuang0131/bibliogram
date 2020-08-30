@@ -2,17 +2,19 @@ const constants = require("./constants")
 const {request} = require("./utils/request")
 const switcher = require("./utils/torswitcher")
 const {extractSharedData} = require("./utils/body")
-const {TtlCache, RequestCache, UserRequestCache} = require("./cache")
+const {TtlCache, RequestCache, UserRequestCache, HashtagRequestCache} = require("./cache")
 const RequestHistory = require("./structures/RequestHistory")
 const db = require("./db")
-require("./testimports")(constants, request, extractSharedData, UserRequestCache, RequestHistory, db)
+require("./testimports")(constants, request, extractSharedData, UserRequestCache, HashtagRequestCache, RequestHistory, db)
 
 const requestCache = new RequestCache(constants.caching.resource_cache_time)
 /** @type {import("./cache").UserRequestCache<import("./structures/User")|import("./structures/ReelUser")>} */
 const userRequestCache = new UserRequestCache(constants.caching.resource_cache_time)
+/** @type {import("./cache").HashtagRequestCache<import("./structures/Hashtag")>} */
+const hashtagRequestCache = new HashtagRequestCache(constants.caching.resource_cache_time)
 /** @type {import("./cache").TtlCache<import("./structures/TimelineEntry")>} */
 const timelineEntryCache = new TtlCache(constants.caching.resource_cache_time)
-const history = new RequestHistory(["user", "timeline", "igtv", "post", "reel"])
+const history = new RequestHistory(["user", "timeline", "igtv", "post", "reel", "hashtag", "popular"])
 
 const AssistantSwitcher = require("./structures/AssistantSwitcher")
 const assistantSwitcher = new AssistantSwitcher()
@@ -73,6 +75,67 @@ async function fetchUser(username, context) {
 						if (error === constants.symbols.NO_ASSISTANTS_AVAILABLE) throw constants.symbols.RATE_LIMITED
 						else throw error
 					})
+				}
+			}
+			throw error
+		})
+	}
+	throw new Error(`Selected fetch mode ${mode} was unmatched.`)
+}
+
+/**
+ * @param {string} username
+ * @param {symbol} [context]
+ */
+async function fetchHashtag(username, context) {
+	if (constants.external.reserved_paths.includes(username)) {
+		throw constants.symbols.ENDPOINT_OVERRIDDEN
+	}
+
+	let mode = constants.allow_user_from_reel
+	if (mode === "preferForRSS") {
+		if (context === constants.symbols.fetch_context.RSS) mode = "prefer"
+		else mode = "onlyPreferSaved"
+	}
+	if (context === constants.symbols.fetch_context.ASSISTANT) {
+		const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
+		if (saved && saved.updated_version >= 2) {
+			return fetchHashtagFromSaved(saved)
+		} else {
+			return fetchHashtagFromGraphQl(username)
+		}
+	}
+	if (mode === "never") {
+		return fetchHashtagFromGraphQl(username)
+	}
+	if (mode === "prefer") {
+		const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
+		if (saved && saved.updated_version >= 2) {
+			return fetchHashtagFromSaved(saved)
+		} else {
+			return fetchHashtagFromGraphQl(username)
+		}
+	}
+	if (mode === "onlyPreferSaved") {
+		const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
+		if (saved && saved.updated_version >= 2) {
+			return fetchHashtagFromSaved(saved)
+		} else {
+			mode = "fallback"
+		}
+	}
+	if (mode === "fallback") {
+		return fetchHashtagFromGraphQl(username).catch(error => {
+			if (error === constants.symbols.INSTAGRAM_DEMANDS_LOGIN || error === constants.symbols.RATE_LIMITED) {
+				const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
+				if (saved) {
+					return fetchHashtagFromSaved(saved)
+				} else if (assistantSwitcher.enabled()) {
+					/*return assistantSwitcher.requestUser(username).catch(error => {
+						if (error === constants.symbols.NO_ASSISTANTS_AVAILABLE) throw constants.symbols.RATE_LIMITED
+						else throw error
+					})*/
+					// ^ WIP
 				}
 			}
 			throw error
@@ -266,6 +329,78 @@ function fetchUserFromSaved(saved) {
 }
 
 /**
+ * @param {string} name
+ * @returns {Promise<{hashtag: import("./structures/Hashtag"), quotaUsed: number}>}
+ */
+function fetchHashtagFromGraphQl(name) {
+	if (constants.caching.self_blocked_status.enabled) {
+		if (history.store.has("hashtag")) {
+			const entry = history.store.get("hashtag")
+			if (!entry.lastRequestSuccessful && Date.now() < entry.lastRequestAt + constants.caching.self_blocked_status.time) {
+				return Promise.reject(constants.symbols.RATE_LIMITED)
+			}
+		}
+	}
+	return hashtagRequestCache.getOrFetch("tags/"+name, false, true, () => {
+		const p = new URLSearchParams()
+		p.set("query_hash", constants.external.hashtag_query_hash)
+		p.set("variables", JSON.stringify({
+			tag_name: name,
+			first: constants.external.timeline_fetch_first
+		}))
+		return switcher.request("hashtag_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+			if (res.status === 429) throw constants.symbols.RATE_LIMITED
+			return res
+		}).then(res => res.json()).then(async body => {
+			if (!body.data.hashtag) {
+				throw constants.symbols.NOT_FOUND
+			} else {
+				const Hashtag = require("./structures/Hashtag")
+				const tag = new Hashtag(body.data.hashtag)
+				history.report("hashtag", true)
+				if (constants.caching.db_user_id) {
+					db.prepare(
+						"REPLACE INTO Hashtags (name,  post_count,  profile_pic_url) VALUES "
+											+"(@name, @post_count, @profile_pic_url)"
+					).run({
+						name: tag.data.name,
+						post_count: tag.data.edge_hashtag_to_media.count || 0,
+						profile_pic_url: tag.data.profile_pic_url
+					})
+				}
+				return tag
+			}
+		}).catch(error => {
+			if (error === constants.symbols.INSTAGRAM_DEMANDS_LOGIN || error === constants.symbols.RATE_LIMITED) {
+				history.report("hashtag", false)
+			}
+			throw error
+		})
+	}).then(hashtag => ({hashtag, quotaUsed: 0}))
+}
+
+function fetchHashtagFromSaved(saved) {
+	let quotaUsed = 0
+	return hashtagRequestCache.getOrFetch("tags/"+saved.name, false, true, async () => {
+		const Hashtag = require("./structures/Hashtag")
+		const hashtag = new Hashtag({
+			id: saved.id,
+			name: saved.name,
+			profile_pic_url: saved.profile_pic_url
+		})
+		// Add first timeline page
+		if (!hashtag.timeline.pages[0]) {
+			const {result: page, fromCache} = await fetchHashtagPage(hashtag.data.name, "")
+			if (!fromCache) quotaUsed++
+			hashtag.timeline.addPage(page)
+		}
+		return hashtag
+	}).then(hashtag => {
+		return {hashtag, quotaUsed}
+	})
+}
+
+/**
  * @param {string} userID
  * @param {string} after
  * @returns {Promise<{result: import("./types").PagedEdges<import("./types").TimelineEntryN2>, fromCache: boolean}>}
@@ -302,6 +437,40 @@ function fetchTimelinePage(userID, after) {
 }
 
 /**
+ * @param {string} name
+ * @param {string} after
+ * @returns {Promise<{result: import("./types").PagedEdges<import("./types").TimelineEntryN2>, fromCache: boolean}>}
+ */
+function fetchHashtagPage(name, after) {
+	const p = new URLSearchParams()
+	p.set("query_hash", constants.external.hashtag_query_hash)
+	p.set("variables", JSON.stringify({
+		tag_name: name,
+		first: constants.external.timeline_fetch_first,
+		after: after
+	}))
+	return requestCache.getOrFetchPromise(`hpage/${name}/${after}`, () => {
+		return switcher.request("timeline_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+			if (res.status === 429) throw constants.symbols.RATE_LIMITED
+		}).then(g => g.json()).then(root => {
+			if (root.data.hashtag === null) {
+				requestCache
+				throw constants.symbols.NOT_FOUND // this should cascade down and show the user not found page
+			}
+			/** @type {import("./types").PagedEdges<import("./types").TimelineEntryN2>} */
+			const timeline = root.data.hashtag.edge_hashtag_to_media
+			history.report("timeline", true)
+			return timeline
+		}).catch(error => {
+			if (error === constants.symbols.RATE_LIMITED) {
+				history.report("timeline", false)
+			}
+			throw error
+		})
+	})
+}
+
+/**
  * @param {string} userID
  * @param {string} after
  * @returns {Promise<{result: import("./types").PagedEdges<import("./types").TimelineEntryN2>, fromCache: boolean}>}
@@ -326,6 +495,34 @@ function fetchIGTVPage(userID, after) {
 		}).catch(error => {
 			if (error === constants.symbols.RATE_LIMITED) {
 				history.report("igtv", false)
+			}
+			throw error
+		})
+	})
+}
+
+/**
+ * @param {string} name
+ * @returns {Promise<{result: import("./types").PagedEdges<import("./types").TimelineEntryN2>, fromCache: boolean}>}
+ */
+function fetchPopularPage(name) {
+	const p = new URLSearchParams()
+	p.set("query_hash", constants.external.hashtag_query_hash)
+	p.set("variables", JSON.stringify({
+		tag_name: name,
+		first: constants.external.timeline_fetch_first
+	}))
+	return requestCache.getOrFetchPromise(`tags/${name}`, () => {
+		return switcher.request("hashtag_graphql", `https://www.instagram.com/graphql/query/?${p.toString()}`, async res => {
+			if (res.status === 429) throw constants.symbols.RATE_LIMITED
+		}).then(g => g.json()).then(root => {
+			/** @type {import("./types").PagedEdges<import("./types").TimelineEntryN2>} */
+			const timeline = root.data.hashtag.edge_hashtag_to_top_posts
+			history.report("popular", true)
+			return timeline
+		}).catch(error => {
+			if (error === constants.symbols.RATE_LIMITED) {
+				history.report("popular", false)
 			}
 			throw error
 		})
@@ -435,12 +632,16 @@ function fetchShortcodeData(shortcode) {
 }
 
 module.exports.fetchUser = fetchUser
+module.exports.fetchHashtag = fetchHashtag
 module.exports.fetchTimelinePage = fetchTimelinePage
 module.exports.fetchIGTVPage = fetchIGTVPage
+module.exports.fetchHashtagPage = fetchHashtagPage
+module.exports.fetchPopularPage = fetchPopularPage
 module.exports.getOrCreateShortcode = getOrCreateShortcode
 module.exports.fetchShortcodeData = fetchShortcodeData
 module.exports.requestCache = requestCache
 module.exports.userRequestCache = userRequestCache
+module.exports.hashtagRequestCache = hashtagRequestCache
 module.exports.timelineEntryCache = timelineEntryCache
 module.exports.getOrFetchShortcode = getOrFetchShortcode
 module.exports.updateProfilePictureFromReel = updateProfilePictureFromReel

@@ -32,7 +32,8 @@ let constants = {
 			user_html: false, // User HTML page seems to have less forgiving rates, and Tor always fails, so it's disabled by default.
 			timeline_graphql: true,
 			post_graphql: true,
-			reel_graphql: true
+			reel_graphql: true,
+			hashtag_graphql: true
 		}
 	},
 	request_backend: "node-fetch", // one of: "node-fetch", "got"
@@ -227,6 +228,7 @@ let constants = {
 	// Instagram uses this stuff. This shouldn't be changed, except to fix a bug that hasn't yet been fixed upstream.
 	external: {
 		reel_query_hash: "c9100bf9110dd6361671f113dd02e7d6",
+		hashtag_query_hash: "c769cb6c71b24c8a86590b22402fda50",
 		timeline_query_hash: "e769aa130647d2354c40ea6a439bfc08",
 		timeline_query_hash_2: "42323d64886122307be10013ad2dcc44", // https://github.com/rarcega/instagram-scraper/blob/dc022081dbefc81500c5f70cce5c70cfd2816e3c/instagram_scraper/constants.py#L30
 		shortcode_query_hash: "2b0673e0dc4580674a88d426fe00ea90",
@@ -289,7 +291,7 @@ let constants = {
 
 	additional_routes: [],
 
-	database_version: 10,
+	database_version: 11,
 	actually_backup_on_database_upgrade: true
 }
 

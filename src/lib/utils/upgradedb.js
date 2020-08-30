@@ -121,6 +121,15 @@ const deltas = new Map([
 			db.prepare("CREATE Table QuotaHistory (identifier TEXT NOT NULL, timestamp INTEGER NOT NULL, remaining INTEGER NOT NULL)")
 				.run()
 		})()
+	}],
+	// version 10 to version 11 (fork)
+	[11, function() {
+		db.transaction(() => {
+			db.prepare("DROP TABLE IF EXISTS Hashtags")
+				.run()
+			db.prepare("CREATE Table Hashtags (name TEXT NOT NULL, post_count INTEGER NOT NULL, profile_pic_url TEXT NOT NULL)")
+				.run()
+		})()
 	}]
 ])
 
@@ -180,6 +189,20 @@ module.exports = async function() {
 			+"\n  -> Consider adding yourself to the instance list:"
 			+"\n     https://git.sr.ht/~cadence/bibliogram-docs/tree/master/docs/Instances.md"
 			+"\n  -> Join the Matrix chatroom for help: #bibliogram:matrix.org"
+			+"\n"
+		)
+		writeProgress(0)
+		await new Promise(resolve => setTimeout(resolve, 300))
+	}
+	else if (currentVersion < 11) {
+		upgradeType = "progress"
+		console.log(
+			   "Welcome to Bibliogram (Austin's fork)! Thank you for installing."
+			+"\n"
+			+"\n  -> Make sure you have set `config/website_origin`"
+			+"\n     as instructed in the installation guide."
+			+"\n  -> This fork is currently experimental and therefore"
+			+"\n     not recommended for production."
 			+"\n"
 		)
 		writeProgress(0)

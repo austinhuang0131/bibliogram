@@ -1,6 +1,6 @@
 mixin feed_link(name, urlPart, username, contentType, display_feed_validation_buttons)
 	span
-		a(rel="alternate" type=contentType href=`/u/${username}/${urlPart}.xml`)
+		a(rel="alternate" type=contentType href=`/${username}/${urlPart}.xml`)
 			= name
 		if display_feed_validation_buttons
 			sup.validate-feed

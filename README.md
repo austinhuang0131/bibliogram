@@ -1,10 +1,13 @@
 Temporary Bibliogram fork.
 
-I may or may not continue development on this repo.
-
 Bibliogram is originally made by [Cadence Ember](https://cadence.moe) and licensed under APGLv3.0.
 
-## Credits & license information
+## Differences
+
+* Supports hashtags
+* `npm start` was changed, no more `cd` (This is because my instance `bg.endl.site` is ran on Cloudlinux which does not allow `cd`ing to my entry point)
+
+## Credits & license information (Copied from original)
 
 All of Bibliogram's code uses the
 [AGPL 3.0 license](https://choosealicense.com/licenses/agpl-3.0/). In

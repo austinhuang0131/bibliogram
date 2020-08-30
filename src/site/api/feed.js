@@ -1,7 +1,7 @@
 const constants = require("../../lib/constants")
 const {Feed} = require("feed")
 const {getFeedSetup} = require("../../lib/utils/feed")
-const {fetchUser, userRequestCache} = require("../../lib/collectors")
+const {fetchUser, fetchHashtag, userRequestCache, hashtagRequestCache} = require("../../lib/collectors")
 const {render, getStaticURL} = require("pinski/plugins")
 const {pugCache} = require("../passthrough")
 const {compile} = require("pug")
@@ -54,10 +54,11 @@ function addAnnouncementFeedItem(feed) {
 
 module.exports = [
 	{
-		route: `/u/(${constants.external.username_regex})/(rss|atom)\\.xml`, methods: ["GET"], code: ({fill}) => {
-			const kind = fill[1]
-			if (constants.feeds.enabled) {
-				return fetchUser(fill[0], constants.symbols.fetch_context.RSS).then(async ({user}) => {
+		route: `/(u|h)/(${constants.external.username_regex})/(rss|atom)\\.xml`, methods: ["GET"], code: ({fill}) => {
+			const kind = fill[2]
+			const type = fill[0]
+			if (constants.feeds.enabled && fill[0] === "u") {
+				return fetchUser(fill[1], constants.symbols.fetch_context.RSS).then(async ({user}) => {
 					const feed = await user.timeline.fetchFeed()
 					if (constants.feeds.feed_message.enabled) {
 						addAnnouncementFeedItem(feed)
@@ -76,13 +77,49 @@ module.exports = [
 							statusCode: 503,
 							contentType: "text/html",
 							headers: {
-								"Cache-Control": `public, max-age=${userRequestCache.getTtl("user/"+fill[0], 1000)}`,
-								"Retry-After": userRequestCache.getTtl("user/"+fill[0], 1000)
+								"Cache-Control": `public, max-age=${userRequestCache.getTtl("user/"+fill[1], 1000)}`,
+								"Retry-After": userRequestCache.getTtl("user/"+fill[1], 1000)
 							},
 							content: pugCache.get("pug/blocked.pug").web({
 								website_origin: constants.website_origin,
-								username: fill[0],
-								expiresMinutes: userRequestCache.getTtl("user/"+fill[0], 1000*60),
+								username: fill[1],
+								expiresMinutes: userRequestCache.getTtl("user/"+fill[1], 1000*60),
+								getStaticURL
+							})
+						}
+					} else if (error === constants.symbols.extractor_results.AGE_RESTRICTED) {
+						return render(403, "pug/age_gated.pug")
+					} else {
+						throw error
+					}
+				})
+			} else if (constants.feeds.enabled && fill[0] === "h") {
+				return fetchHashtag(fill[1], constants.symbols.fetch_context.RSS).then(async ({hashtag}) => {
+					const feed = await hashtag.timeline.fetchFeed()
+					if (constants.feeds.feed_message.enabled) {
+						addAnnouncementFeedItem(feed)
+					}
+					return respondWithFeed(feed, kind, userRequestCache.getTtl("tags/"+hashtag.data.name, 1000), true)
+				}).catch(error => {
+					if (error === constants.symbols.NOT_FOUND || error === constants.symbols.ENDPOINT_OVERRIDDEN) {
+						return render(404, "pug/friendlyerror.pug", {
+							statusCode: 404,
+							title: "Not found",
+							message: "This user doesn't exist.",
+							withInstancesLink: false
+						})
+					} else if (error === constants.symbols.INSTAGRAM_DEMANDS_LOGIN || error === constants.symbols.RATE_LIMITED) {
+						return {
+							statusCode: 503,
+							contentType: "text/html",
+							headers: {
+								"Cache-Control": `public, max-age=${hashtagRequestCache.getTtl("tags/"+fill[1], 1000)}`,
+								"Retry-After": hashtagRequestCache.getTtl("tags/"+fill[1], 1000)
+							},
+							content: pugCache.get("pug/blocked.pug").web({
+								website_origin: constants.website_origin,
+								username: fill[1],
+								expiresMinutes: hashtagRequestCache.getTtl("tags/"+fill[1], 1000*60),
 								getStaticURL
 							})
 						}
@@ -94,7 +131,7 @@ module.exports = [
 				})
 			} else {
 				if (constants.feeds.feed_message.enabled) {
-					const setup = getFeedSetup(fill[0], "", undefined, new Date())
+					const setup = getFeedSetup(type, fill[1], "", undefined, new Date())
 					const feed = new Feed(setup)
 					addAnnouncementFeedItem(feed)
 					return Promise.resolve(respondWithFeed(feed, kind, constants.feeds.feed_disabled_max_age, false))

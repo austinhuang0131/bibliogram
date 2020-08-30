@@ -1,21 +1,21 @@
 const constants = require("../constants")
 
-function getFeedSetup(username, description, image, updated) {
-	const usedName = `@${username}`
+function getFeedSetup(type, username, description, image, updated) {
+	const usedName = `${type === "u" ? "@" : "#"}${username}`
 	return {
 		title: usedName,
 		description,
-		id: `bibliogram:user/${username}`,
-		link: `${constants.website_origin}/u/${username}`,
+		id: `bibliogram:${type === "u" ? "user" : "hashtag"}/${username}`,
+		link: `${constants.website_origin}/${type}/${username}`,
 		feedLinks: {
-			rss: `${constants.website_origin}/u/${username}/rss.xml`,
-			atom: `${constants.website_origin}/u/${username}/atom.xml`
+			rss: `${constants.website_origin}/${type}/${username}/rss.xml`,
+			atom: `${constants.website_origin}/${type}/${username}/atom.xml`
 		},
 		image,
 		updated,
 		author: {
 			name: usedName,
-			link: `${constants.website_origin}/u/${username}`
+			link: `${constants.website_origin}/${type}/${username}`
 		}
 	}
 }

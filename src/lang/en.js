@@ -48,6 +48,7 @@ const {pug} = require("./utils/functions")
 	data.t_home = "Home"
 	data.tab_timeline = "Timeline"
 	data.tab_igtv = "IGTV"
+	data.tab_popular = "Popular"
 	data.next_page_button = "Next page"
 	data.next_page_button_loading = "Loading..."
 	data.profile_is_private_notice = "Profile is private."
