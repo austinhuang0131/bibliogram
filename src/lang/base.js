@@ -36,6 +36,7 @@ const data = {
 	"t_home": "MISSING STRING: t_home",
 	"tab_timeline": "MISSING STRING: tab_timeline",
 	"tab_igtv": "MISSING STRING: tab_igtv",
+	"tab_popular": "MISSING STRING: tab_popular",
 	"next_page_button": "MISSING STRING: next_page_button",
 	"next_page_button_loading": "MISSING STRING: next_page_button_loading",
 	"profile_is_private_notice": "MISSING STRING: profile_is_private_notice",

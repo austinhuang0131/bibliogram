@@ -6,7 +6,7 @@ const {pug} = require("./utils/functions")
 
 	data.go_to_profile = "Go to profile"
 	data.go_to_post = "Go to post"
-	data.go_username_or_url = "Username or URL"
+	data.go_username_or_url = "Username, Hashtag, or URL"
 	data.go_shortcode_or_url = "Shortcode or URL"
 	data.go_button = "Go"
 	data.about_bibliogram_header = "About Bibliogram"
