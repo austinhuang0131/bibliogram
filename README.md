@@ -1,10 +1,11 @@
-Temporary Bibliogram fork.
+Temporary Bibliogram fork, as being currently run on my instance, [bg.endl.site](https://bg.endl.site).
 
 Bibliogram is originally made by [Cadence Ember](https://cadence.moe) and licensed under APGLv3.0.
 
 ## Differences
 
 * Supports hashtags
+* Has Chinese (Simplified) translation
 * `npm start` was changed, no more `cd` (This is because my instance `bg.endl.site` is ran on Cloudlinux which does not allow `cd`ing to my entry point)
 
 ## Credits & license information (Copied from original)
