@@ -85,67 +85,6 @@ async function fetchUser(username, context) {
 
 /**
  * @param {string} username
- * @param {symbol} [context]
- */
-async function fetchHashtag(username, context) {
-	if (constants.external.reserved_paths.includes(username)) {
-		throw constants.symbols.ENDPOINT_OVERRIDDEN
-	}
-
-	let mode = constants.allow_user_from_reel
-	if (mode === "preferForRSS") {
-		if (context === constants.symbols.fetch_context.RSS) mode = "prefer"
-		else mode = "onlyPreferSaved"
-	}
-	if (context === constants.symbols.fetch_context.ASSISTANT) {
-		const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
-		if (saved && saved.updated_version >= 2) {
-			return fetchHashtagFromSaved(saved)
-		} else {
-			return fetchHashtagFromGraphQl(username)
-		}
-	}
-	if (mode === "never") {
-		return fetchHashtagFromGraphQl(username)
-	}
-	if (mode === "prefer") {
-		const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
-		if (saved && saved.updated_version >= 2) {
-			return fetchHashtagFromSaved(saved)
-		} else {
-			return fetchHashtagFromGraphQl(username)
-		}
-	}
-	if (mode === "onlyPreferSaved") {
-		const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
-		if (saved && saved.updated_version >= 2) {
-			return fetchHashtagFromSaved(saved)
-		} else {
-			mode = "fallback"
-		}
-	}
-	if (mode === "fallback") {
-		return fetchHashtagFromGraphQl(username).catch(error => {
-			if (error === constants.symbols.INSTAGRAM_DEMANDS_LOGIN || error === constants.symbols.RATE_LIMITED) {
-				const saved = db.prepare("SELECT name, post_count, profile_pic_url FROM Hashtags WHERE name = ?").get(username)
-				if (saved) {
-					return fetchHashtagFromSaved(saved)
-				} else if (assistantSwitcher.enabled()) {
-					/*return assistantSwitcher.requestUser(username).catch(error => {
-						if (error === constants.symbols.NO_ASSISTANTS_AVAILABLE) throw constants.symbols.RATE_LIMITED
-						else throw error
-					})*/
-					// ^ WIP
-				}
-			}
-			throw error
-		})
-	}
-	throw new Error(`Selected fetch mode ${mode} was unmatched.`)
-}
-
-/**
- * @param {string} username
  * @returns {Promise<{user: import("./structures/User"), quotaUsed: number}>}
  */
 function fetchUserFromHTML(username) {
@@ -330,9 +269,9 @@ function fetchUserFromSaved(saved) {
 
 /**
  * @param {string} name
- * @returns {Promise<{hashtag: import("./structures/Hashtag"), quotaUsed: number}>}
+ * @returns {Promise<{result: import("./structures/Hashtag"), fromCache: boolean}>}
  */
-function fetchHashtagFromGraphQl(name) {
+function fetchHashtag(name) {
 	if (constants.caching.self_blocked_status.enabled) {
 		if (history.store.has("hashtag")) {
 			const entry = history.store.get("hashtag")
@@ -341,7 +280,7 @@ function fetchHashtagFromGraphQl(name) {
 			}
 		}
 	}
-	return hashtagRequestCache.getOrFetch("tags/"+name, false, true, () => {
+	return hashtagRequestCache.getOrFetchPromise("tags/"+name, () => {
 		const p = new URLSearchParams()
 		p.set("query_hash", constants.external.hashtag_query_hash)
 		p.set("variables", JSON.stringify({
@@ -358,16 +297,6 @@ function fetchHashtagFromGraphQl(name) {
 				const Hashtag = require("./structures/Hashtag")
 				const tag = new Hashtag(body.data.hashtag)
 				history.report("hashtag", true)
-				if (constants.caching.db_user_id) {
-					db.prepare(
-						"REPLACE INTO Hashtags (name,  post_count,  profile_pic_url) VALUES "
-											+"(@name, @post_count, @profile_pic_url)"
-					).run({
-						name: tag.data.name,
-						post_count: tag.data.edge_hashtag_to_media.count || 0,
-						profile_pic_url: tag.data.profile_pic_url
-					})
-				}
 				return tag
 			}
 		}).catch(error => {
@@ -376,27 +305,6 @@ function fetchHashtagFromGraphQl(name) {
 			}
 			throw error
 		})
-	}).then(hashtag => ({hashtag, quotaUsed: 0}))
-}
-
-function fetchHashtagFromSaved(saved) {
-	let quotaUsed = 0
-	return hashtagRequestCache.getOrFetch("tags/"+saved.name, false, true, async () => {
-		const Hashtag = require("./structures/Hashtag")
-		const hashtag = new Hashtag({
-			id: saved.id,
-			name: saved.name,
-			profile_pic_url: saved.profile_pic_url
-		})
-		// Add first timeline page
-		if (!hashtag.timeline.pages[0]) {
-			const {result: page, fromCache} = await fetchHashtagPage(hashtag.data.name, "")
-			if (!fromCache) quotaUsed++
-			hashtag.timeline.addPage(page)
-		}
-		return hashtag
-	}).then(hashtag => {
-		return {hashtag, quotaUsed}
 	})
 }
 

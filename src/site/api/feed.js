@@ -94,7 +94,7 @@ module.exports = [
 					}
 				})
 			} else if (constants.feeds.enabled && fill[0] === "h") {
-				return fetchHashtag(fill[1], constants.symbols.fetch_context.RSS).then(async ({hashtag}) => {
+				return fetchHashtag(fill[1]).then(async ({hashtag}) => {
 					const feed = await hashtag.timeline.fetchFeed()
 					if (constants.feeds.feed_message.enabled) {
 						addAnnouncementFeedItem(feed)
