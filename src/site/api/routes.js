@@ -192,10 +192,10 @@ module.exports = [
 					throw constants.symbols.QUOTA_REACHED
 				}
 
-				const {result, fromCache} = await fetchHashtag(username)
+				const {hashtag, fromCache} = await fetchHashtag(username)
 				let remaining = quota.add(req, fromCache ? 0 : 1)
 
-				const selectedTimeline = result[type]
+				const selectedTimeline = hashtag[type]
 				let pageNumber = +params.get("page")
 				if (isNaN(pageNumber) || pageNumber < 1) pageNumber = 1
 				const pageIndex = pageNumber - 1
@@ -210,7 +210,7 @@ module.exports = [
 
 				return render(200, "src/site/pug/hashtag.pug", {
 					url,
-					result,
+					hashtag,
 					selectedTimeline,
 					type,
 					constants,

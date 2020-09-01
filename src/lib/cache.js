@@ -150,28 +150,28 @@ class HashtagRequestCache extends TtlCache {
 	/**
 	 * @param {string} key
 	 * @param {() => Promise<T>} callback
-	 * @returns {Promise<{result: T, fromCache: boolean}>}
+	 * @returns {Promise<{hashtag: T, fromCache: boolean}>}
 	 */
 	getOrFetch(key, callback) {
 		this.cleanKey(key)
 		if (this.cache.has(key)) {
-			return this.getWithoutClean(key).then(result => ({result, fromCache: true}))
+			return this.getWithoutClean(key).then(hashtag => ({hashtag, fromCache: true}))
 		} else {
 			const pending = callback()
 			this.set(key, pending)
-			return pending.then(result => ({result, fromCache: false}))
+			return pending.then(hashtag => ({hashtag, fromCache: false}))
 		}
 	}
 
 	/**
 	 * @param {string} key
 	 * @param {() => Promise<T>} callback
-	 * @returns {Promise<{result: T, fromCache: boolean}>}
+	 * @returns {Promise<{hashtag: T, fromCache: boolean}>}
 	 */
 	getOrFetchPromise(key, callback) {
-		return this.getOrFetch(key, callback).then(result => {
+		return this.getOrFetch(key, callback).then(hashtag => {
 			this.cache.delete(key)
-			return result
+			return hashtag
 		}).catch(error => {
 			this.cache.delete(key)
 			throw error

@@ -269,7 +269,7 @@ function fetchUserFromSaved(saved) {
 
 /**
  * @param {string} name
- * @returns {Promise<{result: import("./structures/Hashtag"), fromCache: boolean}>}
+ * @returns {Promise<{hashtag: import("./structures/Hashtag"), fromCache: boolean}>}
  */
 function fetchHashtag(name) {
 	if (constants.caching.self_blocked_status.enabled) {
