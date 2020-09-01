@@ -338,8 +338,8 @@ module.exports = [
 
 				const settings = getSettings(req)
 
-				const {hashtag, quotaUsed} = await fetchHashtag(username)
-				const remaining = quota.add(req, quotaUsed)
+				const {hashtag, fromCache} = await fetchHashtag(username)
+				const remaining = quota.add(req, fromCache ? 0 : 1)
 
 				const pageIndex = pageNumber - 1
 				const selectedTimeline = hashtag[type]
