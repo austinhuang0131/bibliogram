@@ -291,7 +291,7 @@ let constants = {
 
 	additional_routes: [],
 
-	database_version: 11,
+	database_version: 10,
 	actually_backup_on_database_upgrade: true
 }
 
